@@ -1,0 +1,12 @@
+bin/
+obj/
+*.db
+*.db-shm
+*.db-wal
+.vs/
+.vscode/
+ngrok/
+public/uploads/
+server/xayougram.db
+server/xayougram.db-shm
+server/xayougram.db-wal
