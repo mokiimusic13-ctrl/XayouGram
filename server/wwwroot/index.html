@@ -709,6 +709,9 @@
     </style>
 </head>
 <body>
+    <!-- SPLASH -->
+    <div id="splash"><div style="font-size:64px;margin-bottom:12px">✦</div><div style="font-size:32px;font-weight:700;background:linear-gradient(135deg,#007aff,#af52de);-webkit-background-clip:text;-webkit-text-fill-color:transparent">XayouGram</div></div>
+
     <!-- Auth -->
     <div id="auth-screen">
         <div class="auth-logo">✦</div>
@@ -750,6 +753,30 @@
                     <input type="text" id="search-chats" placeholder="Search chats..." oninput="filterChats()">
                 </div>
                 <div class="chat-list" id="chat-list"></div>
+            </div>
+
+            <!-- Contacts Page -->
+            <div class="page" id="page-contacts">
+                <div class="nav-bar">
+                    <div class="title">Contacts</div>
+                    <div style="display:flex;gap:6px">
+                        <button class="nav-btn" onclick="showModal('new-chat')">➕</button>
+                    </div>
+                </div>
+                <div class="chat-list" id="contacts-list"></div>
+            </div>
+
+            <!-- Calls Page -->
+            <div class="page" id="page-calls">
+                <div class="nav-bar">
+                    <div class="title">Calls</div>
+                    <div style="display:flex;gap:6px">
+                        <button class="nav-btn">📞</button>
+                    </div>
+                </div>
+                <div class="chat-list" id="calls-list">
+                    <div style="text-align:center;padding:40px;color:var(--text2);font-size:14px">Call history coming soon</div>
+                </div>
             </div>
 
             <!-- Settings Page -->
@@ -807,14 +834,10 @@
 
         <!-- Tab Bar -->
         <div class="tab-bar">
-            <div class="tab-item active" onclick="switchTab('chats')">
-                <span class="icon">💬</span>
-                <span class="label">Chats</span>
-            </div>
-            <div class="tab-item" onclick="switchTab('settings')">
-                <span class="icon">⚙️</span>
-                <span class="label">Settings</span>
-            </div>
+            <div class="tab-item active" onclick="switchTab('chats')"><span class="icon">💬</span><span class="label">Chats</span></div>
+            <div class="tab-item" onclick="switchTab('contacts')"><span class="icon">👤</span><span class="label">Contacts</span></div>
+            <div class="tab-item" onclick="switchTab('calls')"><span class="icon">📞</span><span class="label">Calls</span></div>
+            <div class="tab-item" onclick="switchTab('settings')"><span class="icon">⚙️</span><span class="label">Settings</span></div>
         </div>
 
         <!-- Chat View -->
@@ -1120,6 +1143,30 @@
             document.getElementById('page-' + tab).classList.add('active');
             document.querySelector(`.tab-item[onclick*="${tab}"]`).classList.add('active');
             if (tab === 'settings') updateProfile();
+            if (tab === 'contacts') loadContacts();
+        }
+
+        // Contacts
+        async function loadContacts() {
+            try {
+                const res = await fetch('/api/admin/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) return;
+                const users = await res.json();
+                const list = document.getElementById('contacts-list');
+                list.innerHTML = '';
+                users.filter(u => u.id !== currentUser.id).forEach(u => {
+                    const d = document.createElement('div');
+                    d.className = 'chat-item';
+                    d.onclick = () => startChat(u.id);
+                    d.innerHTML = `<div class="avatar">${u.displayName[0]}</div>
+                        <div class="info"><div class="name">${esc(u.displayName)} ${u.isVerified ? '✅' : ''}</div>
+                        <div class="last">@${esc(u.username)}</div></div>
+                        <div class="meta">${u.isOnline ? '<span style="color:var(--accent);font-size:12px">● Online</span>' : ''}</div>`;
+                    list.appendChild(d);
+                });
+            } catch(e) {}
         }
 
         // Chats
