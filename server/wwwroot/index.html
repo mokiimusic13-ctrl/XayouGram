@@ -106,6 +106,12 @@
         /* App */
         #app { display: none; height: 100vh; width: 100%; }
 
+        /* SPLASH */
+        #splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity .4s}
+        #splash.hidden{opacity:0;pointer-events:none}
+        #splash .logo{font-size:64px;margin-bottom:12px}
+        #splash .name{font-size:32px;font-weight:700;background:linear-gradient(135deg,#007aff,#af52de);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
         /* Tab Bar */
         .tab-bar {
             position: fixed; bottom: 0; left: 0; right: 0;
@@ -1430,21 +1436,6 @@
             } catch(e) { console.error(e); }
         }
 
-        // Load profile on settings open
-        async function loadProfile() {
-            try {
-                const res = await fetch('/api/profile/me', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const user = await res.json();
-                    currentUser = user;
-                    localStorage.setItem('xg_user', JSON.stringify(user));
-                    updateProfile();
-                }
-            } catch(e) { console.error(e); }
-        }
-
         // Avatar Upload
         async function uploadAvatar(input) {
             const file = input.files[0];
@@ -1452,46 +1443,17 @@
             const fd = new FormData();
             fd.append('file', file);
             try {
-                const res = await fetch('/api/profile/avatar', {
+                const res = await fetch('/api/upload/avatar', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: fd
                 });
                 const data = await res.json();
-                if (data.url) {
-                    currentUser.avatarUrl = data.url;
-                    localStorage.setItem('xg_user', JSON.stringify(currentUser));
-                    updateProfile();
-                    showToast('✅ Avatar updated!');
-                    // Show avatar image
-                    const avatarEl = document.getElementById('profile-avatar');
-                    avatarEl.innerHTML = `<img src="${data.url}?t=${Date.now()}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-                }
+                currentUser.avatarUrl = data.url;
+                showToast('Avatar updated!');
             } catch(e) { showToast('Failed to upload'); }
             input.value = '';
         }
-
-        // Update profile avatar in all places
-        function updateAvatarsInChats() {
-            document.querySelectorAll('.chat-item .avatar img').forEach(img => {
-                // already rendered
-            });
-        }
-        
-        // Edit bio
-        document.getElementById('edit-bio')?.addEventListener('change', async function() {
-            const bio = this.value.trim();
-            try {
-                await fetch('/api/profile/update', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ bio })
-                });
-                currentUser.bio = bio;
-                localStorage.setItem('xg_user', JSON.stringify(currentUser));
-                showToast('✅ Bio updated');
-            } catch(e) { showToast('Failed to update bio'); }
-        });
 
         // Admin
         async function toggleAdmin() {
@@ -1540,26 +1502,21 @@
                             <div class="ausername">@${esc(u.username)} • ⭐${u.stars}</div>
                         </div>
                         <div class="auactions">
-                            <button class="v" onclick="adminAct('${u.isVerified ? 'unverify' : 'verify'}',${u.id},0)">${u.isVerified ? 'Unv' : 'Ver'}</button>
-                            <span style="display:flex;align-items:center;gap:4px">
-                                <input type="number" id="star-amount-${u.id}" value="1" min="1" max="999999" style="width:50px;padding:4px;background:var(--bg);border:1px solid var(--bg3);border-radius:4px;color:var(--text);font-size:11px;text-align:center">
-                                <button class="s" onclick="adminAct('addstars',${u.id},document.getElementById('star-amount-${u.id}').value)">+⭐</button>
-                                <button class="s" style="color:var(--red)" onclick="adminAct('removestars',${u.id},document.getElementById('star-amount-${u.id}').value)">-⭐</button>
-                            </span>
+                            <button class="v" onclick="adminAct('${u.isVerified ? 'unverify' : 'verify'}',${u.id})">${u.isVerified ? 'Unv' : 'Ver'}</button>
+                            <button class="s" onclick="adminAct('addstars',${u.id})">+⭐</button>
                         </div>
                     </div>`
                 ).join('');
             } catch(e) { console.error(e); }
         }
-        async function adminAct(action, userId, amount) {
-            const stars = parseInt(amount) || 1;
+        async function adminAct(action, userId) {
             try {
                 await fetch('/api/admin/action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ action, userId, stars })
+                    body: JSON.stringify({ action, userId, stars: 1 })
                 });
-                showToast('✅ Done!');
+                showToast('Done!');
                 await loadAdmin();
             } catch(e) { console.error(e); }
         }
