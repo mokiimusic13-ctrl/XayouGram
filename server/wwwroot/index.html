@@ -1540,21 +1540,26 @@
                             <div class="ausername">@${esc(u.username)} • ⭐${u.stars}</div>
                         </div>
                         <div class="auactions">
-                            <button class="v" onclick="adminAct('${u.isVerified ? 'unverify' : 'verify'}',${u.id})">${u.isVerified ? 'Unv' : 'Ver'}</button>
-                            <button class="s" onclick="adminAct('addstars',${u.id})">+⭐</button>
+                            <button class="v" onclick="adminAct('${u.isVerified ? 'unverify' : 'verify'}',${u.id},0)">${u.isVerified ? 'Unv' : 'Ver'}</button>
+                            <span style="display:flex;align-items:center;gap:4px">
+                                <input type="number" id="star-amount-${u.id}" value="1" min="1" max="999999" style="width:50px;padding:4px;background:var(--bg);border:1px solid var(--bg3);border-radius:4px;color:var(--text);font-size:11px;text-align:center">
+                                <button class="s" onclick="adminAct('addstars',${u.id},document.getElementById('star-amount-${u.id}').value)">+⭐</button>
+                                <button class="s" style="color:var(--red)" onclick="adminAct('removestars',${u.id},document.getElementById('star-amount-${u.id}').value)">-⭐</button>
+                            </span>
                         </div>
                     </div>`
                 ).join('');
             } catch(e) { console.error(e); }
         }
-        async function adminAct(action, userId) {
+        async function adminAct(action, userId, amount) {
+            const stars = parseInt(amount) || 1;
             try {
                 await fetch('/api/admin/action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ action, userId, stars: 1 })
+                    body: JSON.stringify({ action, userId, stars })
                 });
-                showToast('Done!');
+                showToast('✅ Done!');
                 await loadAdmin();
             } catch(e) { console.error(e); }
         }
