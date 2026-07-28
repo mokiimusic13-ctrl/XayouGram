@@ -112,7 +112,7 @@ app.MapHub<ChatHub>("/hubs/chat");
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// Fallback to index.html for SPA
+// SPA fallback - для правильной работы маршрутизации
 app.MapFallbackToFile("index.html");
 
 app.Run();
